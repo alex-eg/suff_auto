@@ -2,6 +2,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <sstream>
+#include <fstream>
 
 using namespace std;
 
@@ -54,6 +56,47 @@ void addChar(char c, automaton &a)
     a.last = cur;
 }
 
+bool ifSubStr(string s, automaton &a) 
+{
+    int i = 0;
+    int cur = 0;
+    bool b = true;
+    while (b) {
+	b = (a.st[cur].segue.count(s[i]) != 0);
+	if (b) {
+	    cur = a.st[cur].segue[s[i]];
+	    i++;
+	}
+    }
+    return (i == s.length());
+}
+
+void saveGraph(string filename, automaton &a)
+{
+    ofstream out;
+    out.open(filename.c_str());
+    out << "digraph A {" << endl;
+    out << "rankdir=LR;" << endl;
+    out << "rank=same;" << endl;
+    out << "0 [shape=box];" << endl;
+    string last = "0";
+    for (int i = 1; i < a.size; i++) {
+	map<char, int>::iterator it;
+	for (it = a.st[i-1].segue.begin();
+	     it != a.st[i-1].segue.end(); it ++) {
+	    //out << "edge[constraint=true];" << endl;
+	    out << last << " -> " << it->second << " [label=" << it->first << "];" << endl;
+	}
+	//out << "edge[constraint=false];" << endl;
+	out << i << " -> " << a.st[i].link << " [style=dotted];" << endl;
+	ostringstream s;
+	s << it->second;
+	last = s.str();
+    }
+    out << "}\n";
+    out.close();
+}
+
 int main(int argc, char **argv)
 {
     automaton a;
@@ -64,27 +107,7 @@ int main(int argc, char **argv)
     getline(cin, s);
     for (int i = 0; i < s.length(); i++)
 	addChar(s[i], a);
-    
-    /*    for (int i = 0; i < a.size; i ++)
-	for (std::map<char, int>::iterator it = a.st[i].segue.begin();
-	     it != a.st[i].segue.end(); it ++)
-	     cout << i + 1  << " " << it->second + 1 << " " << it->first << endl;*/
-    while (true) {
-	bool b = true;
-	cout << "Enter word :";
-	cin >> s;
-	int i = 0;
-	int cur = 0;
-	while (b) {
-	    b = (a.st[cur].segue.count(s[i]) != 0);
-	    if (b) {
-		cur = a.st[cur].segue[s[i]];
-		i++;
-	    }
-	}
-	if (i == s.length()) cout << "String " << s << " is first's string substring" << endl;
-	else cout << "String " << s << " is NOT first's string substring" << endl;
-    }
+    saveGraph("./graph.dot", a);
     return 0;
 }
 
